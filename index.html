@@ -1,0 +1,865 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#ffffff">
+<title>푸시 코칭 기록</title>
+<style>
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  [hidden]{display:none!important}
+  body{
+    margin:0 auto;max-width:560px;background:#fff;color:#111;
+    font:17px/1.45 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Pretendard","Malgun Gothic",sans-serif;
+    padding:calc(14px + env(safe-area-inset-top)) 18px calc(28px + env(safe-area-inset-bottom));
+    -webkit-font-smoothing:antialiased;
+  }
+  h1{font-size:21px;margin:0 0 4px;letter-spacing:-.02em;font-weight:700}
+
+  select,input,textarea,button{font-family:inherit}
+  .grid{display:grid;grid-template-columns:1.25fr 1fr;gap:12px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px}
+  .field{display:flex;flex-direction:column;gap:5px;margin:0}
+  .field label{font-size:13px;color:#6d6d75;letter-spacing:-.01em}
+  .field input{width:100%;height:44px;font-size:17px;padding:0 11px;color:#111;background:#fff;border:1px solid #d8d8dd;border-radius:10px}
+  .field input[type=date]{font-size:15px;padding:0 8px}
+  input:focus,textarea:focus{outline:none;border-color:#111}
+
+  /* ── 목록 ── */
+  .primary{width:100%;height:48px;margin:14px 0 4px;border:0;border-radius:10px;background:#111;color:#fff;font-size:16px;font-weight:600}
+  .primary:active{background:#333}
+  .listhint{margin:2px 0 10px;font-size:12.5px;color:#9a9aa2}
+  #recList{border-top:1px solid #eeeff1}
+  .rec{display:block;width:100%;text-align:left;background:#fff;border:0;border-bottom:1px solid #eeeff1;padding:14px 2px;color:#111}
+  .rec:active{background:#fafafa}
+  .rec .top{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+  .rn{font-size:17px;font-weight:600;letter-spacing:-.01em}
+  .rd{font-size:12.5px;color:#8a8a92;font-variant-numeric:tabular-nums}
+  .rs{display:block;font-size:13px;color:#8a8a92;margin-top:3px}
+  .vtag{font-weight:600}
+  .vtag.on{color:#1f7a44}
+  .vtag.off{color:#b0b0b8}
+  .empty{margin:16px 0;font-size:14px;color:#9a9aa2}
+
+  /* ── 보고서 상단 ── */
+  .bar{display:flex;justify-content:space-between;align-items:center;margin:0 0 8px}
+  .link{border:0;background:none;color:#111;font-size:15px;padding:6px 0}
+  .right{display:flex;gap:8px}
+  .mini{height:34px;padding:0 15px;border:1px solid #d8d8dd;background:#fff;border-radius:999px;font-size:14px;color:#111}
+  .mini.solid{background:#111;border-color:#111;color:#fff}
+  .warn{margin:0 0 12px;padding:9px 11px;background:#fff4e5;border-radius:9px;color:#8a5a00;font-size:13.5px;line-height:1.4}
+  .sub{margin:0 0 2px;font-size:13.5px;color:#8a8a92;font-variant-numeric:tabular-nums}
+
+  /* ── 영상 카드 ── */
+  .vcard{background:#f7f7f9;border-radius:14px;padding:14px;margin-top:12px}
+  .vbtn{display:flex;align-items:center;justify-content:center;width:100%;height:58px;border-radius:11px;background:#111;color:#fff;font-size:17px;font-weight:700;text-decoration:none;letter-spacing:-.01em}
+  .vbtn:active{background:#333}
+  .vnone{display:flex;align-items:center;justify-content:center;width:100%;height:58px;border-radius:11px;background:#e9e9ee;color:#8a8a92;font-size:15px}
+  .vfile{margin-top:9px;font-size:13px;color:#6d6d75;word-break:break-all}
+  .vcard .field{margin-top:10px}
+  .vcard .field input{background:#fff}
+  .vdrive{width:100%;height:34px;margin-top:8px;border:0;background:none;color:#8a8a92;font-size:12.5px}
+
+  /* ── 섹션 ── */
+  section{margin-top:24px;padding-top:16px;border-top:1px solid #e6e6ea}
+  section:first-of-type{border-top:0;padding-top:4px;margin-top:14px}
+  h2{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 8px;font-size:16.5px;letter-spacing:-.02em;font-weight:700}
+  .count{flex:0 0 auto;font-size:12.5px;font-weight:600;color:#555;background:#f0f0f3;border-radius:999px;padding:3px 10px;font-variant-numeric:tabular-nums}
+  .count.done{background:#111;color:#fff}
+  .line{margin:0 0 4px;font-size:13px;line-height:1.5;color:#6d6d75;letter-spacing:-.01em}
+  .line b{color:#111;font-weight:700;margin-right:6px}
+  h3{margin:18px 0 7px;font-size:12.5px;font-weight:700;color:#3a3a40;letter-spacing:.03em}
+
+  .chk{display:flex;align-items:flex-start;gap:12px;padding:10px 2px;border-bottom:1px solid #eeeff1;cursor:pointer}
+  .chk:last-of-type{border-bottom:0}
+  .chk input{position:absolute;opacity:0;width:1px;height:1px}
+  .chk .box{flex:0 0 auto;width:25px;height:25px;margin-top:-1px;border:2px solid #c2c2c9;border-radius:7px;background:#fff;display:flex;align-items:center;justify-content:center;transition:background .12s,border-color .12s}
+  .chk .box::after{content:"";width:7px;height:12px;margin-top:-3px;border:2.5px solid #fff;border-top:0;border-right:0;transform:rotate(-45deg) scale(.4);opacity:0;transition:opacity .12s,transform .12s}
+  .chk input:checked + .box{background:#111;border-color:#111}
+  .chk input:checked + .box::after{opacity:1;transform:rotate(-45deg) scale(1)}
+  .chk input:focus-visible + .box{box-shadow:0 0 0 3px #cfd6ff}
+  .chk .t{display:block;font-size:15.5px;letter-spacing:-.01em}
+  .chk .w{display:block;font-size:12.5px;line-height:1.4;color:#8a8a92;margin-top:2px;letter-spacing:-.01em}
+  .chk input:checked ~ .txt .t{color:#9a9aa2;text-decoration:line-through}
+
+  .todo{margin:8px 0 0;font-size:12.5px;color:#8a8a92}
+
+  .logHead{display:grid;grid-template-columns:1fr 1.25fr 34px;gap:6px;font-size:11px;color:#9a9aa2;margin:0 0 5px;padding:0 1px}
+  .logHead.wide{grid-template-columns:1fr 1.25fr}
+  .logRow{display:grid;grid-template-columns:1fr 1.25fr 34px;gap:6px;margin-bottom:6px;align-items:center}
+  .logRow.wide{grid-template-columns:1fr 1.25fr}
+  .logRow input{width:100%;height:40px;font-size:15.5px;padding:0 9px;color:#111;border:1px solid #d8d8dd;border-radius:9px;background:#fff}
+  .del{width:34px;height:34px;padding:0;border:0;border-radius:9px;background:transparent;color:#a5a5ad;font-size:19px;line-height:1}
+  .del:active{background:#f2f2f5}
+  .addBtn{width:100%;height:42px;margin-top:2px;border:1px dashed #d2d2d9;border-radius:9px;background:#fff;color:#5f5f66;font-size:14.5px}
+  .none{margin:2px 0 0;font-size:13.5px;color:#9a9aa2}
+
+  .exItem{display:flex;align-items:flex-start;gap:2px;border-bottom:1px solid #eeeff1}
+  .exItem .chk{flex:1;border-bottom:0;padding-right:0}
+  .exItem .del{margin-top:7px}
+
+  .add{display:flex;flex-direction:column;gap:7px;margin-top:12px}
+  .add input{width:100%;height:42px;font-size:16px;padding:0 10px;border:1px solid #d8d8dd;border-radius:9px}
+  .add button{height:42px;border:1px solid #111;border-radius:9px;background:#111;color:#fff;font-size:15px}
+
+  textarea{width:100%;min-height:56px;height:56px;padding:9px 11px;font-size:16px;line-height:1.45;color:#111;border:1px solid #d8d8dd;border-radius:10px;resize:vertical}
+  textarea::placeholder{color:#b3b3ba}
+
+  .foot{margin-top:28px;padding-top:16px;border-top:1px solid #e6e6ea}
+  .legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:#8a8a92}
+  .legend span{display:inline-flex;align-items:center;gap:5px}
+  .legend i{width:9px;height:9px;border-radius:50%;display:inline-block}
+  #status{font-size:12.5px;color:#8a8a92;margin:12px 0 0;font-variant-numeric:tabular-nums}
+  .danger{width:100%;height:44px;margin-top:22px;border:1px solid #e6d3d3;background:#fff;border-radius:10px;color:#a33;font-size:14.5px}
+
+  /* ── 보기 모드: 입력칸을 글자처럼 ── */
+  body.view #reportView input,body.view #reportView textarea{border-color:transparent;background:transparent;padding-left:0;padding-right:0}
+  body.view #reportView .chk{pointer-events:none}
+  body.view #reportView .chk input:checked ~ .txt .t{text-decoration:none;color:#111}
+  body.view #reportView .chk input:not(:checked) ~ .txt .t{color:#a9a9b1}
+  body.view .todo{display:none}
+  body.view .vcard{background:#f7f7f9}
+</style>
+</head>
+<body>
+
+<!--
+══════════════════════════════════════════════════════════════
+ 데이터 구조 — localStorage 키 "pcl.records.v1", 회차 배열
+ [{
+   "id": "회차 id",
+   "name": "선수 이름",
+   "date": "YYYY-MM-DD",
+   "createdAt": "ISO 날짜", "updatedAt": "ISO 날짜",
+   "video": { "url": "영상 링크(드라이브·유튜브)", "file": "파일명" },
+   "sheet": {
+     "m":      { "acromion":"견봉 높이", "reach":"어깨~손바닥", "width":"어깨너비",
+                 "cls":"클래스", "weight":"체중", "rim":"림 지름" },
+     "set":    { "height":"시트 높이", "angle":"등받이 각도", "tension":"등받이 장력",
+                 "camber":"캠버", "depth":"좌석 깊이" },
+     "chk":    { "base":true, "values":true, "chair":true, "back":true, "sit":true, "diff":true },
+     "log":    [ { "v":"바꾼 값", "f":"영상 파일명·메모" } ]
+   },
+   "pose": {
+     "chk":    { "wheel":true, "side":true, "front":true, "diag":true, "full":true,
+                 "catch":true, "light":true, "again":true },
+     "memo":   "자세 교정 메모"
+   },
+   "extra":    [ { "id":"...", "title":"추가 촬영 항목", "memo":"메모", "done":false } ],
+   "extraDone":{ "EXTRA_SHOTS의 id": true },
+   "note":     "자유 메모"
+ }]
+══════════════════════════════════════════════════════════════
+-->
+
+<script>
+/* ── 추가 촬영 요청 기본 목록 ─────────────────────────────
+   여기에 추가하면 화면에 나타남.
+   형식: { id: '고유id', title: '항목 제목', memo: '메모' }
+   예)   { id: 'elbow-side', title: '팔꿈치 측면 클로즈업', memo: '벌어짐 확인' }
+   주의: id는 목록마다 달라야 함.
+*/
+var EXTRA_SHOTS = [
+];
+</script>
+
+<!-- ════════ 목록 화면 ════════ -->
+<div id="listView">
+  <h1>푸시 코칭 기록</h1>
+  <p class="listhint">회차를 누르면 보고서가 열립니다.</p>
+  <button class="primary" id="newBtn" type="button">＋ 새 회차</button>
+  <div id="recList"></div>
+  <p class="empty" id="listEmpty">아직 기록이 없습니다. 새 회차로 시작하세요.</p>
+</div>
+
+<!-- ════════ 보고서 화면 ════════ -->
+<div id="reportView" hidden>
+  <div class="bar">
+    <button class="link" id="backBtn" type="button">← 목록</button>
+    <span class="right">
+      <button class="mini" id="editBtn" type="button">수정</button>
+      <button class="mini" id="cancelBtn" type="button" hidden>취소</button>
+      <button class="mini solid" id="saveBtn" type="button" hidden>저장</button>
+    </span>
+  </div>
+
+  <h1 id="rTitle">—</h1>
+  <p class="sub" id="rSub">—</p>
+  <p class="warn" id="warn" hidden></p>
+
+  <!-- 영상: 보고서의 본체 -->
+  <div class="vcard">
+    <a class="vbtn" id="vOpen" href="#" target="_blank" rel="noopener noreferrer">▶ 영상 열기</a>
+    <div class="vnone" id="vNone">영상 링크 없음</div>
+    <div class="vfile" id="vFile" hidden></div>
+    <div id="vEdit" hidden>
+      <p class="field">
+        <label for="vUrl">영상 링크</label>
+        <input id="vUrl" type="url" inputmode="url" autocomplete="off" placeholder="드라이브 · 유튜브 주소">
+      </p>
+      <p class="field">
+        <label for="vName">파일명</label>
+        <input id="vName" type="text" autocomplete="off" placeholder="선택">
+      </p>
+    </div>
+    <button class="vdrive" id="drive" type="button">드라이브 업로드 폴더</button>
+    <p class="note" id="driveNote" style="text-align:center;margin:0"></p>
+  </div>
+
+  <section>
+    <h2>기본 정보</h2>
+    <div class="grid">
+      <p class="field">
+        <label for="name">선수</label>
+        <input id="name" type="text" list="names" autocomplete="off" placeholder="이름">
+        <datalist id="names"></datalist>
+      </p>
+      <p class="field">
+        <label for="date">날짜</label>
+        <input id="date" type="date">
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <h2>① 시트 설정 트랙 <span class="count" id="cSheet">0/6</span></h2>
+    <p class="line"><b>가이드</b>측정값과 착석을 겹쳐 보고, 한 번에 한 변수만 바꿔 비교한다.</p>
+    <p class="line"><b>촬영법</b>휠체어 옆면이 꽉 차게, 기준물과 세팅값이 같이 보이게.</p>
+    <p class="line"><b>기준물</b>카드를 시트 옆 프레임, 골반 높이에 붙인다. 몸과 같은 평면, 화면 가운데 가까이. 정면으로 보이는 한 컷을 기준으로 쓴다.</p>
+
+    <h3>측정값</h3>
+    <div class="grid2">
+      <p class="field">
+        <label for="m-acromion">견봉 높이 (cm)</label>
+        <input id="m-acromion" type="text" inputmode="decimal" data-m="acromion" placeholder="—">
+      </p>
+      <p class="field">
+        <label for="m-reach">어깨~손바닥 길이 (cm)</label>
+        <input id="m-reach" type="text" inputmode="decimal" data-m="reach" placeholder="—">
+      </p>
+      <p class="field">
+        <label for="m-width">어깨너비 (cm)</label>
+        <input id="m-width" type="text" inputmode="decimal" data-m="width" placeholder="—">
+      </p>
+      <p class="field">
+        <label for="m-cls">클래스</label>
+        <input id="m-cls" type="text" inputmode="decimal" data-m="cls" placeholder="—">
+      </p>
+      <p class="field">
+        <label for="m-weight">체중 (kg)</label>
+        <input id="m-weight" type="text" inputmode="decimal" data-m="weight" placeholder="—">
+      </p>
+      <p class="field">
+        <label for="m-rim">림 지름 (cm)</label>
+        <input id="m-rim" type="text" inputmode="decimal" data-m="rim" placeholder="—">
+      </p>
+    </div>
+    <p class="todo">권장 수치는 두지 않음.</p>
+
+    <h3>시트 세팅</h3>
+    <div class="grid2">
+      <p class="field">
+        <label for="s-height">시트 높이</label>
+        <input id="s-height" type="text" data-set="height" placeholder="—">
+      </p>
+      <p class="field">
+        <label for="s-angle">등받이 각도</label>
+        <input id="s-angle" type="text" data-set="angle" placeholder="—">
+      </p>
+      <p class="field">
+        <label for="s-tension">등받이 장력</label>
+        <input id="s-tension" type="text" data-set="tension" placeholder="—">
+      </p>
+      <p class="field">
+        <label for="s-camber">캠버</label>
+        <input id="s-camber" type="text" data-set="camber" placeholder="—">
+      </p>
+      <p class="field">
+        <label for="s-depth">좌석 깊이</label>
+        <input id="s-depth" type="text" data-set="depth" placeholder="—">
+      </p>
+    </div>
+
+    <h3>촬영 체크</h3>
+    <div id="sheetSteps"></div>
+
+    <h3>바꾼 변수 로그</h3>
+    <div class="logHead" id="logHead"><span>바꾼 값</span><span>영상 파일명·메모</span><span></span></div>
+    <div id="logRows"></div>
+    <p class="none" id="logNone" hidden>기록 없음.</p>
+    <button class="addBtn" id="logAdd" type="button">＋ 한 줄 추가</button>
+  </section>
+
+  <section>
+    <h2>② 자세 교정 트랙 <span class="count" id="cPose">0/7</span></h2>
+    <p class="line"><b>가이드</b>푸시 동작을 찍어 부하가 걸리는 지점(어깨·팔꿈치·림)을 짚는다.</p>
+    <p class="line"><b>촬영법</b>카메라는 선수 어깨 높이에, 림과 손 전체가 프레임 안에.</p>
+    <p class="line"><b>기준물</b>카드는 쓰지 않는다 — 25인치 바퀴가 기준. 각도 평가에 별도 기준물은 필요 없다.</p>
+    <div id="poseSteps"></div>
+
+    <h3>메모</h3>
+    <textarea id="poseMemo" placeholder="한두 줄"></textarea>
+  </section>
+
+  <section>
+    <h2>추가 촬영 요청 <span class="count" id="cExtra">0/0</span></h2>
+    <p class="line"><b>언제</b>영상을 보다 빠진 게 있으면 적어 두고 다음 촬영 때 찍는다.</p>
+    <div id="exList"></div>
+    <p class="none" id="exEmpty" hidden>요청 없음.</p>
+    <div class="add" id="exAddForm">
+      <input id="exTitle" type="text" placeholder="항목 — 예: 뒤에서 견갑 보이게" autocomplete="off">
+      <input id="exMemo" type="text" placeholder="메모 (선택)" autocomplete="off">
+      <button id="exAdd" type="button">추가</button>
+    </div>
+  </section>
+
+  <section>
+    <h2>자유 메모</h2>
+    <textarea id="note" placeholder="한두 줄"></textarea>
+  </section>
+
+  <div class="foot">
+    <div class="legend">
+      <span><i style="background:#1f9d55"></i>목표 호 11~3시</span>
+      <span><i style="background:#e07a1f"></i>현재 캐치 구간</span>
+      <span><i style="background:#1f6feb"></i>시선</span>
+    </div>
+    <p id="status">이 기기에만 저장됩니다</p>
+  </div>
+
+  <button class="danger" id="delBtn" type="button">이 회차 삭제</button>
+</div>
+
+<script>
+(function () {
+  var KEY = 'pcl.records.v1';
+
+  var SHEET_STEPS = [
+    { k: 'base',   t: '기준물: 신분증·체크카드(85.6 × 54mm)',  w: '규격이 정확하고 안 구겨져서 스케일 기준이 된다' },
+    { k: 'values', t: '세팅값을 말하면서 화면에 한 번 보여주기', w: '캠버·시트 높이·좌석 깊이를 영상에 남겨 둠' },
+    { k: 'chair',  t: '휠체어 360도 2바퀴',                  w: '캠버와 좌석 깊이를 각도별로 확인' },
+    { k: 'back',   t: '손으로 등받이 눌러보기',               w: '장력이 풀렸는지 손으로 눌러 확인' },
+    { k: 'sit',    t: '선수 착석 360도',                     w: '몸과 시트가 어디서 겹치는지' },
+    { k: 'diff',   t: '바뀐 변수 한 곳만 확대 촬영',           w: '이번에 바꾼 값이 실제로 어떻게 보이는지' }
+  ];
+
+  var POSE_STEPS = [
+    { k: 'wheel', t: '25인치 바퀴 전체가 화면에 다 들어오게', w: '휠 규격이 통일되어 있어 바퀴가 화면 기준이 된다' },
+    { k: 'side',  t: '측면 — 어깨 높이·휠체어 전체 한 컷', w: '어깨·팔꿈치 위치와 림 접점이 같이 보임' },
+    { k: 'front', t: '정면 한 컷',                        w: '좌우 대칭과 몸통 돌아감 확인' },
+    { k: 'diag',  t: '45도 한 컷',                        w: '정면·측면 사이 각도에서 팔 경로 확인' },
+    { k: 'full',  t: '두 바퀴 통짜 30초~1분',              w: '끊지 않아야 리듬과 캐치 구간이 보임' },
+    { k: 'catch', t: '손이 림 잡고 놓는 순간이 보이게',     w: '캐치~릴리스 구간이 이 자세의 핵심' },
+    { k: 'light', t: '역광 피하기',                        w: '실루엣이 되면 팔 각도가 안 보임' },
+    { k: 'again', t: '이전 기록과 같은 조건으로 한 번 더',  w: '같은 조건이어야 전후 비교가 됨' }
+  ];
+
+  var records = [], cur = null, mode = 'view', dirty = false, leaveArmed = false;
+
+  function $(id) { return document.getElementById(id); }
+  function qsa(sel) { return Array.prototype.slice.call(document.querySelectorAll(sel)); }
+  function pad(n) { return String(n).padStart(2, '0'); }
+  function today() {
+    var d = new Date();
+    return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+  }
+  function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+  function clone(o) { return JSON.parse(JSON.stringify(o)); }
+  function stamp(iso) {
+    if (!iso) return '';
+    var d = new Date(iso);
+    return isNaN(d) ? '' : pad(d.getHours()) + ':' + pad(d.getMinutes());
+  }
+  function say(t) { $('status').textContent = t; }
+  function cleanUrl(u) {
+    u = (u || '').trim();
+    if (!u) return '';
+    if (!/^https?:\/\//i.test(u)) u = 'https://' + u.replace(/^\/+/, '');
+    return u;
+  }
+  function hostTail(u) {
+    return u.replace(/^https?:\/\//i, '').replace(/\/$/, '').slice(0, 50);
+  }
+
+  function blank() {
+    return {
+      id: uid(), name: '', date: today(),
+      createdAt: new Date().toISOString(), updatedAt: '',
+      video: { url: '', file: '' },
+      sheet: { m: {}, set: {}, chk: {}, log: [] },
+      pose: { chk: {}, memo: '' },
+      extra: [], extraDone: {}, note: ''
+    };
+  }
+  function norm(r) {
+    r.video = r.video || {};
+    if (typeof r.video.url !== 'string') r.video.url = '';
+    if (typeof r.video.file !== 'string') r.video.file = '';
+    r.sheet = r.sheet || {};
+    r.sheet.m = r.sheet.m || {};
+    r.sheet.set = r.sheet.set || {};
+    r.sheet.chk = r.sheet.chk || {};
+    if (!Array.isArray(r.sheet.log)) r.sheet.log = [];
+    r.pose = r.pose || {};
+    r.pose.chk = r.pose.chk || {};
+    if (!Array.isArray(r.extra)) r.extra = [];
+    r.extraDone = r.extraDone || {};
+    if (typeof r.note !== 'string') r.note = '';
+    return r;
+  }
+  function loadAll() {
+    try {
+      var a = JSON.parse(localStorage.getItem(KEY) || '[]');
+      return Array.isArray(a) ? a.map(norm) : [];
+    } catch (e) { return []; }
+  }
+  function persist() {
+    try { localStorage.setItem(KEY, JSON.stringify(records)); return true; }
+    catch (e) { say('저장 실패 — 사파리 일반 창에서 열어 주세요'); return false; }
+  }
+
+  // ── 정적 체크리스트 ─────────────────────────────────────
+  function buildSteps(host, steps, group) {
+    host.innerHTML = '';
+    steps.forEach(function (s) {
+      var l = document.createElement('label');
+      l.className = 'chk';
+      l.innerHTML = '<input type="checkbox"><span class="box"></span><span class="txt"><span class="t"></span><span class="w"></span></span>';
+      var inp = l.querySelector('input');
+      inp.setAttribute('data-g', group);
+      inp.setAttribute('data-k', s.k);
+      l.querySelector('.t').textContent = s.t;
+      l.querySelector('.w').textContent = s.w;
+      host.appendChild(l);
+    });
+  }
+
+  // ── 목록 ────────────────────────────────────────────────
+  function sortedRecords() {
+    return records.slice().sort(function (a, b) {
+      var d = String(b.date || '').localeCompare(String(a.date || ''));
+      if (d) return d;
+      return String(b.updatedAt || b.createdAt || '').localeCompare(String(a.updatedAt || a.createdAt || ''));
+    });
+  }
+
+  function renderList() {
+    var host = $('recList');
+    host.innerHTML = '';
+    sortedRecords().forEach(function (r) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'rec';
+      b.setAttribute('data-id', r.id);
+
+      var top = document.createElement('span'); top.className = 'top';
+      var n = document.createElement('span'); n.className = 'rn';
+      n.textContent = r.name || '이름 없음';
+      var d = document.createElement('span'); d.className = 'rd';
+      d.textContent = r.date || '날짜 없음';
+      top.appendChild(n); top.appendChild(d);
+
+      var s = document.createElement('span'); s.className = 'rs';
+      s.appendChild(document.createTextNode('시트 높이 ' + (r.sheet.set.height || '—') + ' · '));
+      var tag = document.createElement('span');
+      var hasV = !!(r.video && r.video.url);
+      tag.className = 'vtag ' + (hasV ? 'on' : 'off');
+      tag.textContent = hasV ? '영상 O' : '영상 X';
+      s.appendChild(tag);
+
+      b.appendChild(top); b.appendChild(s);
+      host.appendChild(b);
+    });
+    $('listEmpty').hidden = records.length > 0;
+    buildNames();
+  }
+
+  function buildNames() {
+    var dl = $('names');
+    dl.innerHTML = '';
+    var seen = {};
+    records.forEach(function (r) {
+      if (!r.name || seen[r.name]) return;
+      seen[r.name] = 1;
+      var o = document.createElement('option');
+      o.value = r.name;
+      dl.appendChild(o);
+    });
+  }
+
+  // ── 영상 카드 ───────────────────────────────────────────
+  function renderVideo() {
+    var url = (cur.video && cur.video.url) || '';
+    var file = (cur.video && cur.video.file) || '';
+    var editing = (mode === 'edit');
+
+    $('vEdit').hidden = !editing;
+    if (editing) {
+      $('vOpen').hidden = true;
+      $('vNone').hidden = true;
+    } else if (url) {
+      $('vOpen').hidden = false;
+      $('vOpen').setAttribute('href', url);
+      $('vNone').hidden = true;
+    } else {
+      $('vOpen').hidden = true;
+      $('vNone').hidden = false;
+    }
+
+    var label = file || (url ? hostTail(url) : '');
+    $('vFile').textContent = label;
+    $('vFile').hidden = !label || editing;
+  }
+
+  // ── 보고서 렌더 ─────────────────────────────────────────
+  function updateTitle() {
+    $('rTitle').textContent = ($('name').value || '').trim() || '이름 없음';
+    $('rSub').textContent = $('date').value || '날짜 없음';
+  }
+
+  function logRow(v, f, editable) {
+    var row = document.createElement('div');
+    row.className = 'logRow' + (editable ? '' : ' wide');
+    var a = document.createElement('input');
+    a.type = 'text'; a.value = v || ''; a.placeholder = '변수 / 값'; a.setAttribute('data-log', 'v');
+    var b = document.createElement('input');
+    b.type = 'text'; b.value = f || ''; b.placeholder = '영상 파일명 / 메모'; b.setAttribute('data-log', 'f');
+    row.appendChild(a); row.appendChild(b);
+    if (editable) {
+      var x = document.createElement('button');
+      x.type = 'button'; x.className = 'del'; x.textContent = '×'; x.setAttribute('aria-label', '줄 삭제');
+      row.appendChild(x);
+    }
+    return row;
+  }
+
+  function renderLog() {
+    var host = $('logRows');
+    host.innerHTML = '';
+    var editable = (mode === 'edit');
+    var entries = (cur.sheet.log || []).filter(function (e) { return e && (e.v || e.f); });
+    $('logHead').className = 'logHead' + (editable ? '' : ' wide');
+    if (editable) {
+      entries = entries.concat([{ v: '', f: '' }]);
+    } else {
+      $('logNone').hidden = entries.length > 0;
+    }
+    entries.forEach(function (e) { host.appendChild(logRow(e.v, e.f, editable)); });
+    if (editable) $('logNone').hidden = true;
+  }
+
+  function exRow(title, memo, checked, attrName, attrVal, removable, id) {
+    var row = document.createElement('div');
+    row.className = 'exItem';
+    var label = document.createElement('label');
+    label.className = 'chk';
+    var inp = document.createElement('input');
+    inp.type = 'checkbox';
+    inp.checked = !!checked;
+    inp.setAttribute('data-' + attrName, attrVal);
+    var box = document.createElement('span'); box.className = 'box';
+    var txt = document.createElement('span'); txt.className = 'txt';
+    var t = document.createElement('span'); t.className = 't'; t.textContent = title;
+    txt.appendChild(t);
+    if (memo) {
+      var w = document.createElement('span'); w.className = 'w'; w.textContent = memo;
+      txt.appendChild(w);
+    }
+    label.appendChild(inp); label.appendChild(box); label.appendChild(txt);
+    row.appendChild(label);
+    if (removable) {
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'del'; b.textContent = '×';
+      b.setAttribute('data-del-extra', id); b.setAttribute('aria-label', '요청 삭제');
+      row.appendChild(b);
+    }
+    return row;
+  }
+
+  function renderExtra() {
+    var host = $('exList');
+    host.innerHTML = '';
+    var editable = (mode === 'edit');
+    var total = 0, done = 0;
+
+    EXTRA_SHOTS.forEach(function (s) {
+      total++;
+      var on = !!cur.extraDone[s.id];
+      if (on) done++;
+      host.appendChild(exRow(s.title, s.memo || '', on, 'shot', s.id, false));
+    });
+    cur.extra.forEach(function (e) {
+      total++;
+      if (e.done) done++;
+      host.appendChild(exRow(e.title, e.memo || '', e.done, 'ex', e.id, editable, e.id));
+    });
+
+    $('exEmpty').hidden = total > 0;
+    setCount('cExtra', done, total);
+  }
+
+  function setCount(id, n, t) {
+    var el = $(id);
+    el.textContent = n + '/' + t;
+    if (t > 0 && n === t) el.classList.add('done'); else el.classList.remove('done');
+  }
+
+  function updateCounts() {
+    var s = qsa('input[data-g="sheet"]'), sn = 0;
+    s.forEach(function (c) { if (c.checked) sn++; });
+    setCount('cSheet', sn, s.length);
+
+    var p = qsa('input[data-g="pose"]'), pn = 0;
+    p.forEach(function (c) { if (c.checked) pn++; });
+    setCount('cPose', pn, p.length);
+
+    var e = qsa('input[data-shot], input[data-ex]'), en = 0;
+    e.forEach(function (c) { if (c.checked) en++; });
+    setCount('cExtra', en, e.length);
+  }
+
+  function renderReport() {
+    $('name').value = cur.name || '';
+    $('date').value = cur.date || '';
+    $('vUrl').value = (cur.video && cur.video.url) || '';
+    $('vName').value = (cur.video && cur.video.file) || '';
+    qsa('input[data-m]').forEach(function (i) { i.value = cur.sheet.m[i.dataset.m] || ''; });
+    qsa('input[data-set]').forEach(function (i) { i.value = cur.sheet.set[i.dataset.set] || ''; });
+    qsa('input[data-g]').forEach(function (c) { c.checked = !!cur[c.dataset.g].chk[c.dataset.k]; });
+    $('poseMemo').value = cur.pose.memo || '';
+    $('note').value = cur.note || '';
+    updateTitle();
+    renderVideo();
+    renderLog();
+    renderExtra();
+    updateCounts();
+  }
+
+  // ── 폼 → 기록 ───────────────────────────────────────────
+  function readForm() {
+    cur.name = $('name').value.trim();
+    cur.date = $('date').value;
+    cur.video.url = cleanUrl($('vUrl').value);
+    cur.video.file = $('vName').value.trim();
+    qsa('input[data-m]').forEach(function (i) { cur.sheet.m[i.dataset.m] = i.value; });
+    qsa('input[data-set]').forEach(function (i) { cur.sheet.set[i.dataset.set] = i.value; });
+    qsa('input[data-g]').forEach(function (c) { cur[c.dataset.g].chk[c.dataset.k] = c.checked; });
+    qsa('input[data-shot]').forEach(function (c) { cur.extraDone[c.dataset.shot] = c.checked; });
+    qsa('input[data-ex]').forEach(function (c) {
+      var it = cur.extra.find(function (x) { return x.id === c.dataset.ex; });
+      if (it) it.done = c.checked;
+    });
+    cur.sheet.log = qsa('#logRows .logRow').map(function (row) {
+      return {
+        v: row.querySelector('[data-log="v"]').value,
+        f: row.querySelector('[data-log="f"]').value
+      };
+    });
+    cur.pose.memo = $('poseMemo').value;
+    cur.note = $('note').value;
+  }
+
+  function storedCopy() {
+    var r = records.find(function (x) { return x.id === cur.id; });
+    return r ? clone(r) : null;
+  }
+
+  // ── 화면 전환 ───────────────────────────────────────────
+  function showPane(which) {
+    $('listView').hidden = (which !== 'list');
+    $('reportView').hidden = (which !== 'report');
+    window.scrollTo(0, 0);
+  }
+
+  function setMode(m) {
+    mode = m;
+    document.body.classList.toggle('view', m === 'view');
+    qsa('#reportView input, #reportView textarea').forEach(function (el) { el.readOnly = (m === 'view'); });
+    $('editBtn').hidden = (m !== 'view');
+    $('saveBtn').hidden = (m !== 'edit');
+    $('cancelBtn').hidden = (m !== 'edit');
+    $('delBtn').hidden = (m !== 'view');
+    $('logAdd').hidden = (m !== 'edit');
+    $('exAddForm').hidden = (m !== 'edit');
+    dirty = false;
+    leaveArmed = false;
+    hideWarn();
+    renderVideo();
+    renderLog();
+    renderExtra();
+    updateCounts();
+  }
+
+  function showWarn(t) { $('warn').textContent = t; $('warn').hidden = false; }
+  function hideWarn() { $('warn').hidden = true; }
+
+  function openReport(rec, startMode) {
+    cur = norm(clone(rec));
+    renderReport();
+    showPane('report');
+    setMode(startMode || 'view');
+  }
+
+  function showList() {
+    cur = null;
+    mode = 'view';
+    dirty = false;
+    leaveArmed = false;
+    showPane('list');
+    renderList();
+  }
+
+  function attemptLeave(fn) {
+    if (mode === 'edit' && dirty && !leaveArmed) {
+      leaveArmed = true;
+      showWarn('저장하지 않은 변경이 있습니다. 한 번 더 누르면 저장 없이 나갑니다.');
+      return;
+    }
+    fn();
+  }
+
+  // ── 저장 / 취소 / 삭제 ──────────────────────────────────
+  function saveRecord() {
+    readForm();
+    cur.sheet.log = cur.sheet.log.filter(function (e) {
+      return (e.v || '').trim() || (e.f || '').trim();
+    });
+    if (!cur.createdAt) cur.createdAt = new Date().toISOString();
+    cur.updatedAt = new Date().toISOString();
+    var i = records.findIndex(function (r) { return r.id === cur.id; });
+    if (i >= 0) records[i] = clone(cur); else records.push(clone(cur));
+    persist();
+    renderList();
+    setMode('view');
+    renderReport();
+    say('저장됨 · ' + stamp(cur.updatedAt));
+  }
+
+  function cancelEdit() {
+    var base = storedCopy();
+    if (!base) { showList(); return; }   // 저장 전 새 회차는 목록으로
+    cur = norm(base);
+    renderReport();
+    setMode('view');
+    say('수정 취소');
+    showPane('report');
+  }
+
+  // ── 이벤트 ─────────────────────────────────────────────
+  document.addEventListener('input', function (e) {
+    if (mode !== 'edit') return;
+    var t = e.target;
+    if (t.id === 'exTitle' || t.id === 'exMemo') return;
+    dirty = true;
+    leaveArmed = false;
+    updateTitle();
+    updateCounts();
+  });
+
+  document.addEventListener('change', function (e) {
+    if (mode !== 'edit') return;
+    if (e.target.type === 'checkbox') { dirty = true; leaveArmed = false; updateCounts(); }
+  });
+
+  $('logAdd').addEventListener('click', function () {
+    readForm();
+    cur.sheet.log.push({ v: '', f: '' });
+    renderLog();
+    dirty = true; leaveArmed = false;
+    var rows = qsa('#logRows .logRow');
+    var last = rows[rows.length - 1];
+    if (last) last.querySelector('input').focus();
+  });
+
+  $('logRows').addEventListener('click', function (e) {
+    var b = e.target.closest('.del');
+    if (!b || mode !== 'edit') return;
+    var row = b.closest('.logRow');
+    var idx = qsa('#logRows .logRow').indexOf(row);
+    readForm();
+    if (idx >= 0) cur.sheet.log.splice(idx, 1);
+    renderLog();
+    dirty = true; leaveArmed = false;
+  });
+
+  $('exAdd').addEventListener('click', function () {
+    var t = $('exTitle').value.trim();
+    if (!t) { $('exTitle').focus(); return; }
+    readForm();
+    cur.extra.push({ id: uid(), title: t, memo: $('exMemo').value.trim(), done: false });
+    $('exTitle').value = ''; $('exMemo').value = '';
+    renderExtra();
+    dirty = true; leaveArmed = false;
+  });
+
+  $('exMemo').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { e.preventDefault(); $('exAdd').click(); }
+  });
+
+  $('exList').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-del-extra]');
+    if (!b || mode !== 'edit') return;
+    var id = b.getAttribute('data-del-extra');
+    readForm();
+    cur.extra = cur.extra.filter(function (x) { return x.id !== id; });
+    renderExtra();
+    dirty = true; leaveArmed = false;
+  });
+
+  $('editBtn').addEventListener('click', function () {
+    setMode('edit');
+    say('수정 중');
+    window.scrollTo(0, 0);
+  });
+
+  $('saveBtn').addEventListener('click', saveRecord);
+  $('cancelBtn').addEventListener('click', cancelEdit);
+
+  $('backBtn').addEventListener('click', function () {
+    attemptLeave(showList);
+  });
+
+  $('newBtn').addEventListener('click', function () {
+    attemptLeave(function () {
+      openReport(blank(), 'edit');
+      say('새 회차');
+    });
+  });
+
+  $('delBtn').addEventListener('click', function () {
+    if (!cur) return;
+    var label = (cur.name || '이름 없음') + ' · ' + (cur.date || '날짜 없음');
+    if (!window.confirm('이 회차를 삭제할까요?\n' + label + '\n 되돌릴 수 없습니다.')) return;
+    records = records.filter(function (r) { return r.id !== cur.id; });
+    persist();
+    showList();
+  });
+
+  $('drive').addEventListener('click', function () {
+    $('driveNote').textContent = '링크 연결 예정';
+  });
+
+  $('recList').addEventListener('click', function (e) {
+    var b = e.target.closest('.rec');
+    if (!b) return;
+    var r = records.find(function (x) { return x.id === b.getAttribute('data-id'); });
+    if (r) openReport(r, 'view');
+  });
+
+  window.addEventListener('beforeunload', function (e) {
+    if (mode === 'edit' && dirty) { e.preventDefault(); e.returnValue = ''; return ''; }
+  });
+
+  // ── 시작 ───────────────────────────────────────────────
+  buildSteps($('sheetSteps'), SHEET_STEPS, 'sheet');
+  buildSteps($('poseSteps'), POSE_STEPS, 'pose');
+
+  records = loadAll();
+  renderList();
+  showPane('list');
+})();
+</script>
+</body>
+</html>
